@@ -4,9 +4,12 @@ const AUTH_URL = "http://20.207.122.201/evaluation-service/auth";
 const LOG_URL = "http://20.207.122.201/evaluation-service/logs";
 
 let TOKEN = "";
+let fetchingToken = false;
 
-// 🔑 function to get fresh token automatically
 async function getToken() {
+  if (fetchingToken) return; // prevent duplicate calls
+  fetchingToken = true;
+
   try {
     const res = await axios.post(AUTH_URL, {
       email: "rijitghosh53@gmail.com",
@@ -21,7 +24,9 @@ async function getToken() {
 
     TOKEN = res.data.access_token;
   } catch (err) {
-    console.log("Token fetch failed");
+    console.log("Token fetch failed:", err.response?.data || err.message);
+  } finally {
+    fetchingToken = false;
   }
 }
 
