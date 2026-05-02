@@ -4,12 +4,9 @@ const AUTH_URL = "http://20.207.122.201/evaluation-service/auth";
 const LOG_URL = "http://20.207.122.201/evaluation-service/logs";
 
 let TOKEN = "";
-let fetchingToken = false;
 
+// get fresh token every time
 async function getToken() {
-  if (fetchingToken) return; // prevent duplicate calls
-  fetchingToken = true;
-
   try {
     const res = await axios.post(AUTH_URL, {
       email: "rijitghosh53@gmail.com",
@@ -25,19 +22,15 @@ async function getToken() {
     TOKEN = res.data.access_token;
   } catch (err) {
     console.log("Token fetch failed:", err.response?.data || err.message);
-  } finally {
-    fetchingToken = false;
   }
 }
 
 async function Log(stack, level, pkg, message) {
   try {
-    // always ensure token exists
-    if (!TOKEN) {
-      await getToken();
-    }
+    // ALWAYS fetch fresh token
+    await getToken();
 
-    let res = await axios.post(
+    const res = await axios.post(
       LOG_URL,
       { stack, level, package: pkg, message },
       {
@@ -50,30 +43,7 @@ async function Log(stack, level, pkg, message) {
 
     console.log("Log sent:", res.data);
   } catch (e) {
-    // if token expired → refresh and retry once
-    if (e.response?.data?.message === "invalid authorization token") {
-      console.log("Token expired, fetching new one...");
-      await getToken();
-
-      try {
-        const retry = await axios.post(
-          LOG_URL,
-          { stack, level, package: pkg, message },
-          {
-            headers: {
-              Authorization: `Bearer ${TOKEN}`,
-              "Content-Type": "application/json"
-            }
-          }
-        );
-
-        console.log("Log sent (retry):", retry.data);
-      } catch (err) {
-        console.log("log failed after retry:", err.response?.data || err.message);
-      }
-    } else {
-      console.log("log failed:", e.response?.data || e.message);
-    }
+    console.log("log failed:", e.response?.data || e.message);
   }
 }
 
