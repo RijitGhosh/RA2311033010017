@@ -27,12 +27,12 @@ async function getToken() {
 
 async function Log(stack, level, pkg, message) {
   try {
-    // always get fresh token before logging
+    // always ensure token exists
     if (!TOKEN) {
       await getToken();
     }
 
-    const res = await axios.post(
+    let res = await axios.post(
       LOG_URL,
       { stack, level, package: pkg, message },
       {
@@ -45,7 +45,30 @@ async function Log(stack, level, pkg, message) {
 
     console.log("Log sent:", res.data);
   } catch (e) {
-    console.log("log failed:", e.response?.data || e.message);
+    // if token expired → refresh and retry once
+    if (e.response?.data?.message === "invalid authorization token") {
+      console.log("Token expired, fetching new one...");
+      await getToken();
+
+      try {
+        const retry = await axios.post(
+          LOG_URL,
+          { stack, level, package: pkg, message },
+          {
+            headers: {
+              Authorization: `Bearer ${TOKEN}`,
+              "Content-Type": "application/json"
+            }
+          }
+        );
+
+        console.log("Log sent (retry):", retry.data);
+      } catch (err) {
+        console.log("log failed after retry:", err.response?.data || err.message);
+      }
+    } else {
+      console.log("log failed:", e.response?.data || e.message);
+    }
   }
 }
 
