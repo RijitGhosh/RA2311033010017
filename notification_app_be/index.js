@@ -4,7 +4,6 @@ const Log = require("../logging_middleware/logger");
 
 const app = express();
 
-const TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJNYXBDbGFpbXMiOnsiYXVkIjoiaHR0cDovLzIwLjI0NC41Ni4xNDQvZXZhbHVhdGlvbi1zZXJ2aWNlIiwiZW1haWwiOiJyaWppdGdob3NoNTNAZ21haWwuY29tIiwiZXhwIjoxNzc3NzA0NTkwLCJpYXQiOjE3Nzc3MDM2OTAsImlzcyI6IkFmZm9yZCBNZWRpY2FsIFRlY2hub2xvZ2llcyBQcml2YXRlIExpbWl0ZWQiLCJqdGkiOiJiNGU1MzIxNi1jOTNhLTQxYzAtYTIxOS1hNGQwZGY4NjdmZDQiLCJsb2NhbGUiOiJlbi1JTiIsIm5hbWUiOiJyaWppdCBnaG9zaCIsInN1YiI6IjhmZmNkMGYzLTQyNTYtNGU2MS05NjcxLTUwNWQwYjBmOGM4NSJ9LCJlbWFpbCI6InJpaml0Z2hvc2g1M0BnbWFpbC5jb20iLCJuYW1lIjoicmlqaXQgZ2hvc2giLCJyb2xsTm8iOiJyYTIzMTEwMzMwMTAwMTciLCJhY2Nlc3NDb2RlIjoiUWticHhIIiwiY2xpZW50SUQiOiI4ZmZjZDBmMy00MjU2LTRlNjEtOTY3MS01MDVkMGIwZjhjODUiLCJjbGllbnRTZWNyZXQiOiJxQXdmWkFxSHFaVmZYbnhWIn0.YpG_ojtvZ8IUX7YCroNo9dLeLKVbE0u6QAulTbA4DBc";
 // middleware
 app.use(async (req, res, next) => {
   await Log("backend", "info", "route", `${req.method} ${req.url}`);
@@ -15,13 +14,9 @@ app.get("/notifications", async (req, res) => {
   try {
     await Log("backend", "info", "controller", "fetching");
 
+    // 👉 No Authorization header here
     const response = await axios.get(
-      "http://20.207.122.201/evaluation-service/notifications",
-      {
-        headers: {
-          Authorization: `Bearer ${TOKEN}`
-        }
-      }
+      "http://20.207.122.201/evaluation-service/notifications"
     );
 
     const data = response.data.notifications;
@@ -42,7 +37,7 @@ app.get("/notifications", async (req, res) => {
     res.json(top);
   } catch (e) {
     await Log("backend", "error", "controller", e.message);
-    console.log(e.response?.data || e.message); // 👈 helps debug
+    console.log(e.response?.data || e.message);
     res.status(500).send("error");
   }
 });
